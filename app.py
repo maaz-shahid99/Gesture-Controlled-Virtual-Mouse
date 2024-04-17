@@ -30,13 +30,13 @@ mid_fing_x = 0
 left_click_flag = False
 right_click_flag = False
 
-cursor_res_x=480
-cursor_res_y=360
+cursor_res_x=240
+cursor_res_y=180
 
 input_range_x = (int((wCam-cursor_res_x)/2), int(cursor_res_x+(wCam-cursor_res_x)/2))
 input_range_y = (int((hCam-cursor_res_y)/2), int(cursor_res_y+(hCam-cursor_res_y)/2))
 
-print(input_range_x, input_range_y)
+# print(input_range_x, input_range_y)
 
 # Define smoothing factor (0 < alpha < 1)
 alpha = 0.7
@@ -123,7 +123,7 @@ while True:
                     # Move cursor to the smoothed position
                     
                     win32api.SetCursorPos((int(smoothed_x),int(smoothed_y)))
-                    print(int(smoothed_x),int(smoothed_y),x,y)
+                    # print(int(smoothed_x),int(smoothed_y),x,y)
 
                     # Update previous cursor position
                     prev_cursor_x = smoothed_x
@@ -157,7 +157,7 @@ while True:
                 mid_fing_y = screen_height/hCam*y
                 
                 # Add a threshold for double-click detection
-                if abs(index_x - mid_fing_x) < 30 and not right_click_flag and not left_click_flag:
+                if abs(index_x - mid_fing_x) < 20 and not right_click_flag and not left_click_flag:
                     print('double click')
                     pyautogui.doubleClick()
                     right_click_flag = True
