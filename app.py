@@ -46,7 +46,7 @@ prev_cursor_x = None
 prev_cursor_y = None
 
 def map_value_x(value):
-    input_min, input_max = (80,560)
+    input_min, input_max = input_range_x
     output_min, output_max = (0,640)
     
     # Map the input value to the output range
@@ -58,7 +58,7 @@ def map_value_x(value):
     return int(mapped_value)
 
 def map_value_y(value):
-    input_min, input_max = (60,420)
+    input_min, input_max = input_range_y
     output_min, output_max = (0,480)
     
     # Map the input value to the output range
