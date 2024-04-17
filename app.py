@@ -112,7 +112,8 @@ while True:
                     mid_fing_x = screen_width - (x * screen_width / wCam)
                     mid_fing_y = screen_height/hCam*y
                     
-                    if abs(index_x - mid_fing_x) < 50 and not right_click_flag and not left_click_flag:
+                    # Add a threshold for double-click detection
+                    if abs(index_x - mid_fing_x) < 30 and not right_click_flag and not left_click_flag:
                         print('double click')
                         pyautogui.doubleClick()
                         right_click_flag = True
