@@ -11,7 +11,6 @@ screen_width, screen_height = pyautogui.size()
 pTime = 0
 
 cap = cv2.VideoCapture(1)
-
 cap.set(3, wCam)
 cap.set(4, hCam)
 
@@ -23,19 +22,53 @@ detector = mp_hands.Hands(max_num_hands=1,
                       min_tracking_confidence=0.5)
 
 index_y = 0
+index_x = 0
 knuckle_y = 0
 mid_fing_y = 0
-index_x = 0
 mid_fing_x = 0
+
 left_click_flag = False
 right_click_flag = False
 
+cursor_res_x=480
+cursor_res_y=360
+
+input_range_x = (int((wCam-cursor_res_x)/2), int(cursor_res_x+(wCam-cursor_res_x)/2))
+input_range_y = (int((hCam-cursor_res_y)/2), int(cursor_res_y+(hCam-cursor_res_y)/2))
+
+print(input_range_x, input_range_y)
+
 # Define smoothing factor (0 < alpha < 1)
-alpha = 0.75
+alpha = 0.7
 
 # Initialize previous cursor position
 prev_cursor_x = None
 prev_cursor_y = None
+
+def map_value_x(value):
+    input_min, input_max = (80,560)
+    output_min, output_max = (0,640)
+    
+    # Map the input value to the output range
+    mapped_value = output_min + (output_max - output_min) * ((value - input_min) / (input_max - input_min))
+    
+    # Make sure the mapped value stays within the output range
+    mapped_value = max(min(mapped_value, output_max), output_min)
+    
+    return int(mapped_value)
+
+def map_value_y(value):
+    input_min, input_max = (60,420)
+    output_min, output_max = (0,480)
+    
+    # Map the input value to the output range
+    mapped_value = output_min + (output_max - output_min) * ((value - input_min) / (input_max - input_min))
+    
+    # Make sure the mapped value stays within the output range
+    mapped_value = max(min(mapped_value, output_max), output_min)
+    
+    return int(mapped_value)
+
 
 while True:
 
@@ -72,6 +105,9 @@ while True:
 
             if id == 3: #Thumb Knuckle
                 cv2.circle(img=img, center=(x,y), radius=20, color=(0,255,255))
+
+                x = map_value_x(x)
+                y = map_value_y(y)
                 
                 knuckle_x = screen_width - (x * screen_width / wCam)
                 knuckle_y = screen_height/hCam*y
@@ -143,3 +179,6 @@ while True:
 
     if cv2.waitKey(10) == ord('q'):
         break
+
+
+
