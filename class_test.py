@@ -3,6 +3,7 @@ import time
 import mediapipe as mp
 import pyautogui
 import win32api
+import utils
 
 class HandDetector:
     def __init__(self):
@@ -76,8 +77,11 @@ class HandDetector:
 
                 if id == 3:  # Thumb Knuckle
                     cv2.circle(img=img, center=(x, y), radius=20, color=(0, 255, 255))
-                    x = self.map_value_x(x)
-                    y = self.map_value_y(y)
+                    # x = self.map_value_x(x)
+                    # y = self.map_value_y(y)
+
+                    x = utils.map_value_x(x)
+                    y = utils.map_value_y(y)
 
                     knuckle_x = self.screen_width - (x * self.screen_width / self.wCam)
                     knuckle_y = self.screen_height / self.hCam * y
@@ -136,21 +140,6 @@ class HandDetector:
         # Flip Image
         img = cv2.flip(img, 1)
         cv2.putText(img, str(int(fps)), (20, 50), cv2.FONT_HERSHEY_PLAIN, 3, (255, 0, 0), 3)
-
-    def map_value_x(self, value):
-        input_min, input_max = self.input_range_x
-        output_min, output_max = (0, 640)
-        mapped_value = output_min + (output_max - output_min) * ((value - input_min) / (input_max - input_min))
-        mapped_value = max(min(mapped_value, output_max), output_min)
-        return int(mapped_value)
-
-    def map_value_y(self, value):
-        input_min, input_max = self.input_range_y
-        output_min, output_max = (0, 480)
-        mapped_value = output_min + (output_max - output_min) * ((value - input_min) / (input_max - input_min))
-        mapped_value = max(min(mapped_value, output_max), output_min)
-        return int(mapped_value)
-
 
 if __name__ == "__main__":
     hand_detector = HandDetector()
