@@ -2,7 +2,7 @@ import cv2
 import time
 import mediapipe as mp
 import pyautogui
-import win32api
+# import win32api
 
 # Define the dimensions of the camera input and the region of interest (ROI)
 wCam, hCam = 640, 480
