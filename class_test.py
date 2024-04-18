@@ -39,7 +39,7 @@ class HandDetector:
         self.input_range_y = (int((self.hCam - self.cursor_res_y) / 2),
                               int(self.cursor_res_y + (self.hCam - self.cursor_res_y) / 2))
 
-        self.alpha = 0.5
+        self.alpha = 0.3
         self.prev_cursor_x = None
         self.prev_cursor_y = None
 
