@@ -13,7 +13,17 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 # Create a gesture recognizer instance with the live stream mode:
 def print_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
-    print('gesture recognition result: {}'.format(result))
+    if result.gestures:
+        # Get the first element from the gestures list (assuming there's only one gesture recognized)
+        first_gesture = result.gestures[0]
+    
+        # Access the category_name attribute from the Category object within the first_gesture
+        category_name = first_gesture[0].category_name
+    
+        print(category_name)
+    else:
+        print("No gestures recognized")
+    # print('gesture recognition result: {}'.format(result.gestures[0][3]))
 
 
 mp_drawing = mp.solutions.drawing_utils
