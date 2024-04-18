@@ -10,13 +10,14 @@ wCam, hCam = 640, 480
 screen_width, screen_height = pyautogui.size()
 pTime = 0
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 cap.set(3, wCam)
 cap.set(4, hCam)
 
 
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
+#detector = mp_hands.Hands()
 detector = mp_hands.Hands(max_num_hands=1,
                       min_detection_confidence=0.7, 
                       min_tracking_confidence=0.5)
@@ -39,7 +40,7 @@ input_range_y = (int((hCam-cursor_res_y)/2), int(cursor_res_y+(hCam-cursor_res_y
 # print(input_range_x, input_range_y)
 
 # Define smoothing factor (0 < alpha < 1)
-alpha = 0.7
+alpha = 0.5
 
 # Initialize previous cursor position
 prev_cursor_x = None
