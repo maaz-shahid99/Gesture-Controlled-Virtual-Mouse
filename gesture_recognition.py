@@ -13,7 +13,7 @@ VisionRunningMode = mp.tasks.vision.RunningMode
 
 # Create a gesture recognizer instance with the live stream mode:
 def print_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
-    print('gesture recognition result: {}'.format(result.hand_landmarks))
+    print('gesture recognition result: {}'.format(result))
 
 
 mp_drawing = mp.solutions.drawing_utils
