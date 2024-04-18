@@ -1,6 +1,5 @@
 import cv2
 import time
-import numpy as np
 import mediapipe as mp
 import pyautogui
 import win32api
@@ -78,12 +77,12 @@ while True:
     _, img = cap.read()
 
     #BGR to RGB conversion
-    # RGB_frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    RGB_frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     #Detections
-    result = detector.process(img)
+    result = detector.process(RGB_frame)
 
-    RGB_frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+    # RGB_frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
     hand_landmarks = None  # Initialize hand_landmarks outside the loop
 
