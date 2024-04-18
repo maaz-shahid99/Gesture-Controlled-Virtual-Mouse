@@ -16,10 +16,10 @@ def print_result(result: GestureRecognizerResult, output_image: mp.Image, timest
     if result.gestures:
         # Get the first element from the gestures list (assuming there's only one gesture recognized)
         first_gesture = result.gestures[0]
-    
+
         # Access the category_name attribute from the Category object within the first_gesture
         category_name = first_gesture[0].category_name
-    
+
         print(category_name)
     else:
         print("No gestures recognized")
@@ -30,7 +30,7 @@ mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
 options = GestureRecognizerOptions(
-    base_options=BaseOptions(model_asset_path='C:\\Users\\maazs\\OneDrive\\Documents\\Projects\\Virtual Mouse\\models\\gesture_recognizer.task'),
+    base_options=BaseOptions(model_asset_path='D:\web development\Gesture-Controlled-Virtual-Mouse\\models\\gesture_recognizer.task'),
     running_mode=VisionRunningMode.LIVE_STREAM,
     result_callback=print_result
     )
@@ -46,15 +46,15 @@ with GestureRecognizer.create_from_options(options) as recognizer:
         success, img = cap.read()
         if not success:
             print("Ignoring empty camera frame.")
-            continue 
+            continue
 
         RGB_frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
 
         mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=RGB_frame)
-        
+
         # Get the current time in seconds since the epoch
         current_time_ms = int(time.time() * 1000)
-        
+
         detected_ges = recognizer.recognize_async(mp_image, current_time_ms)
 
         # print(detected_ges)
