@@ -17,6 +17,7 @@ cap.set(4, hCam)
 
 mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
+#detector = mp_hands.Hands()
 detector = mp_hands.Hands(max_num_hands=1,
                       min_detection_confidence=0.7,
                       min_tracking_confidence=0.5)
@@ -39,7 +40,7 @@ input_range_y = (int((hCam-cursor_res_y)/2), int(cursor_res_y+(hCam-cursor_res_y
 # print(input_range_x, input_range_y)
 
 # Define smoothing factor (0 < alpha < 1)
-alpha = 0.7
+alpha = 0.5
 
 # Initialize previous cursor position
 prev_cursor_x = None
@@ -178,4 +179,8 @@ while True:
     cv2.imshow("Imshow", img)
 
     if cv2.waitKey(10) == ord('q'):
+<<<<<<< HEAD
         break
+=======
+        break
+>>>>>>> 01eaab95602d5f0405ab888cdbea5ae528724353
