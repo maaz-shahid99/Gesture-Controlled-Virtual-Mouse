@@ -179,8 +179,4 @@ while True:
     cv2.imshow("Imshow", img)
 
     if cv2.waitKey(10) == ord('q'):
-<<<<<<< HEAD
         break
-=======
-        break
->>>>>>> 01eaab95602d5f0405ab888cdbea5ae528724353
