@@ -9,7 +9,7 @@ wCam, hCam = 640, 480
 screen_width, screen_height = pyautogui.size()
 pTime = 0
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 cap.set(3, wCam)
 cap.set(4, hCam)
 
@@ -38,7 +38,7 @@ input_range_y = (int((hCam-cursor_res_y)/2), int(cursor_res_y+(hCam-cursor_res_y
 
 # print(input_range_x, input_range_y)
 
-# Define smoothing factor (0 < alpha < 1)
+# Define smoothing factor
 alpha = 5
 
 # Initialize cursor position

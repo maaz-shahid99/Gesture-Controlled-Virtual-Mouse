@@ -2,7 +2,7 @@ import cv2
 import mediapipe as mp
 import time
 
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 
 BaseOptions = mp.tasks.BaseOptions
@@ -30,7 +30,7 @@ mp_drawing = mp.solutions.drawing_utils
 mp_hands = mp.solutions.hands
 
 options = GestureRecognizerOptions(
-    base_options=BaseOptions(model_asset_path='D:\web development\Gesture-Controlled-Virtual-Mouse\\models\\gesture_recognizer.task'),
+    base_options=BaseOptions(model_asset_path='C:\\Users\\maazs\\OneDrive\\Documents\\Projects\\Virtual Mouse\\models\\gesture_recognizer.task'),
     running_mode=VisionRunningMode.LIVE_STREAM,
     result_callback=print_result
     )
