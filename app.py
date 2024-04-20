@@ -40,7 +40,7 @@ input_range_y = (int((hCam-cursor_res_y)/2), int(cursor_res_y+(hCam-cursor_res_y
 # print(input_range_x, input_range_y)
 
 # Define smoothing factor (0 < alpha < 1)
-alpha = 0.5
+alpha = 0.2
 
 # Initialize previous cursor position
 prev_cursor_x = None

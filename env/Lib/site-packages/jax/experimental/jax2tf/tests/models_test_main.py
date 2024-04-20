@@ -37,55 +37,52 @@ python3 models_test_main.py --example_prefix=flax/cnn
 python3 models_test_main.py --examples="flax/cnn_[(b ...)]"
 ```
 """
-from absl import app
-from absl import flags
 
+from collections.abc import Sequence
+import datetime
 import functools
 import numpy as np
 import os
 import re
 import jax
 
-from jax._src import dtypes
-import jax.numpy as jnp
+from absl import app
+from absl import flags
 
-import datetime
-from typing import Dict, List, Sequence, Tuple
+from jax._src import dtypes
 
 import tensorflow as tf
 
-from jax.experimental.jax2tf.shape_poly import InconclusiveDimensionOperation
+from jax.core import InconclusiveDimensionOperation
 from jax.experimental.jax2tf.tests.model_harness import ALL_HARNESSES
 from jax.experimental.jax2tf.tests.converters import ALL_CONVERTERS
 
-flags.DEFINE_list("converters", [x.name for x in ALL_CONVERTERS],
+_CONVERTERS = flags.DEFINE_list("converters", [x.name for x in ALL_CONVERTERS],
                   "Which converters to test.")
 
-flags.DEFINE_list("examples", [],
+_EXAMPLES = flags.DEFINE_list("examples", [],
                   ("List of examples to test, e.g.: 'flax/mnist,flax/seq2seq'. "
                    "If empty, will test all examples."))
 
-flags.DEFINE_string("example_prefix", "",
+_EXAMPLE_PREFIX = flags.DEFINE_string("example_prefix", "",
                     ("Prefix for filtering tests. For instance 'flax/mnist' "
                      "will test all examples starting with 'flax/mnist' "
                      "(including all polymorphic tests)."))
 
-flags.DEFINE_bool(
+_WRITE_MARKDOWN = flags.DEFINE_bool(
     "write_markdown", True,
     "If true, write results as Markdown. Otherwise, only output to stdout.")
 
-flags.DEFINE_bool(
+_FAIL_ON_ERROR = flags.DEFINE_bool(
     "fail_on_error", False,
     ("If true, exit with an error when a conversion fails. Useful for "
      "debugging because it will show the entire stack trace."))
 
-FLAGS = flags.FLAGS
 
-
-def _write_markdown(results: Dict[str, List[Tuple[str, str,]]]) -> None:
+def _write_markdown(results: dict[str, list[tuple[str, str,]]]) -> None:
   """Writes all results to Markdown file."""
   table_lines = []
-  converters = FLAGS.converters
+  converters = _CONVERTERS.value
 
   table_lines.append("| Example | " + " ".join([f"{c} |" for c in converters]))
   table_lines.append("|" + (" --- |" * (len(converters) + 1)))
@@ -173,7 +170,7 @@ def test_converters():
       exit()
 
   def _maybe_reraise(e):
-    if FLAGS.fail_on_error:
+    if _FAIL_ON_ERROR.value:
       raise e
 
   def _format(e):
@@ -183,13 +180,13 @@ def test_converters():
     return msg
 
   converters = list(
-      filter(lambda x: x.name in FLAGS.converters, ALL_CONVERTERS))
+      filter(lambda x: x.name in _CONVERTERS.value, ALL_CONVERTERS))
   _exit_if_empty(converters, "converters")
 
   harnesses_to_test = {
       name: fn for name, fn in ALL_HARNESSES.items()
-      if (not FLAGS.examples or name in FLAGS.examples) and
-         (not FLAGS.example_prefix or name.startswith(FLAGS.example_prefix))
+      if (not _EXAMPLES.value or name in _EXAMPLES.value) and
+         (not _EXAMPLE_PREFIX.value or name.startswith(_EXAMPLE_PREFIX.value))
   }
   _exit_if_empty(harnesses_to_test, "harness")
 
@@ -218,7 +215,7 @@ def test_converters():
           jax_result = harness.apply_with_vars(*xs)
           try:
             tf_result = apply_tf(*xs)
-            jax.tree_map(np_assert_allclose, jax_result, tf_result)
+            jax.tree.map(np_assert_allclose, jax_result, tf_result)
             print("=== Numerical comparison OK!")
           except AssertionError as e:
             error_msg = "Numerical comparison error:\n" + _format(e)
@@ -243,7 +240,7 @@ def test_converters():
       converter_results.append((converter.name, error_msg))
     results[harness.name] = converter_results
 
-  if FLAGS.write_markdown:
+  if _WRITE_MARKDOWN:
     _write_markdown(results)
   else:
     print("=== NOT writing results to Markdown.")

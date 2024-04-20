@@ -14,18 +14,19 @@
 
 """Base JAX Sparse object."""
 import abc
+from collections.abc import Sequence
 import math
-from typing import Sequence, Tuple
 
 import jax
 from jax._src import core
+from jax._src import util
 from jax._src.typing import Array
 
 
-class JAXSparse(abc.ABC):
+class JAXSparse(util.StrictABC):
   """Base class for high-level JAX sparse objects."""
   data: jax.Array
-  shape: Tuple[int, ...]
+  shape: tuple[int, ...]
   nse: property
   dtype: property
 
@@ -43,8 +44,8 @@ class JAXSparse(abc.ABC):
   def ndim(self) -> int:
     return len(self.shape)
 
-  def __init__(self, args: Tuple[Array, ...], *, shape: Sequence[int]):
-    self.shape = tuple(shape)
+  def __init__(self, args: tuple[Array, ...], *, shape: Sequence[int]):
+    self.shape = core.canonicalize_shape(shape)
 
   def __repr__(self):
     name = self.__class__.__name__
