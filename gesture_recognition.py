@@ -2,64 +2,70 @@ import cv2
 import mediapipe as mp
 import time
 
-cap = cv2.VideoCapture(0)
+class GestureRecognizerWrapper:
+    def __init__(self, model_asset_path):
+        self.options = self._create_options(model_asset_path)
+        self.recognizer = None
 
+    def _create_options(self, model_asset_path):
+        base_options = mp.tasks.BaseOptions(model_asset_path=model_asset_path)
+        return mp.tasks.vision.GestureRecognizerOptions(
+            base_options=base_options,
+            running_mode=mp.tasks.vision.RunningMode.LIVE_STREAM,
+            result_callback=self.print_result
+        )
 
-BaseOptions = mp.tasks.BaseOptions
-GestureRecognizer = mp.tasks.vision.GestureRecognizer
-GestureRecognizerOptions = mp.tasks.vision.GestureRecognizerOptions
-GestureRecognizerResult = mp.tasks.vision.GestureRecognizerResult
-VisionRunningMode = mp.tasks.vision.RunningMode
+    def print_result(self, result: mp.tasks.vision.GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
+        if result.gestures:
+            category_name = result.gestures[0][0].category_name
+            print(category_name)
+        else:
+            print("No gestures recognized")
 
-# Create a gesture recognizer instance with the live stream mode:
-def print_result(result: GestureRecognizerResult, output_image: mp.Image, timestamp_ms: int):
-    if result.gestures:
-        # Get the first element from the gestures list (assuming there's only one gesture recognized)
-        first_gesture = result.gestures[0]
+    def create_recognizer(self):
+        self.recognizer = mp.tasks.vision.GestureRecognizer.create_from_options(self.options)
+        print('Gesture recognizer created')
 
-        # Access the category_name attribute from the Category object within the first_gesture
-        category_name = first_gesture[0].category_name
+    def recognize_gestures(self, frame, current_time_ms):
+        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=frame)
+        return self.recognizer.recognize_async(mp_image, current_time_ms)
 
-        print(category_name)
-    else:
-        print("No gestures recognized")
-    # print('gesture recognition result: {}'.format(result.gestures[0][3]))
+class CameraCapture:
+    def __init__(self, device_index=0):
+        self.cap = cv2.VideoCapture(device_index)
 
-
-mp_drawing = mp.solutions.drawing_utils
-mp_hands = mp.solutions.hands
-
-options = GestureRecognizerOptions(
-    base_options=BaseOptions(model_asset_path='D:\web development\Gesture-Controlled-Virtual-Mouse\\models\\gesture_recognizer.task'),
-    running_mode=VisionRunningMode.LIVE_STREAM,
-    result_callback=print_result
-    )
-
-
-with GestureRecognizer.create_from_options(options) as recognizer:
-  # The detector is initialized. Use it here.
-  # ...
-    print('gesture recognizer created')
-
-    while True:
-
-        success, img = cap.read()
+    def read_frame(self):
+        success, img = self.cap.read()
         if not success:
             print("Ignoring empty camera frame.")
+            return None
+        return img
+
+    def release(self):
+        self.cap.release()
+
+def main():
+    model_path = 'C:\\Users\\maazs\\OneDrive\\Documents\\Projects\\Virtual Mouse\\models\\gesture_recognizer.task'
+    gesture_recognizer = GestureRecognizerWrapper(model_path)
+    gesture_recognizer.create_recognizer()
+
+    camera = CameraCapture(0)
+
+    while True:
+        frame = camera.read_frame()
+        if frame is None:
             continue
 
-        RGB_frame = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-
-        mp_image = mp.Image(image_format=mp.ImageFormat.SRGB, data=RGB_frame)
-
-        # Get the current time in seconds since the epoch
         current_time_ms = int(time.time() * 1000)
+        detected_gestures = gesture_recognizer.recognize_gestures(frame, current_time_ms)
 
-        detected_ges = recognizer.recognize_async(mp_image, current_time_ms)
-
-        # print(detected_ges)
-
-        cv2.imshow("Imshow", img)
+        cv2.imshow("Imshow", frame)
 
         if cv2.waitKey(10) == ord('q'):
             break
+
+    camera.release()
+    cv2.destroyAllWindows()
+
+if __name__ == "__main__":
+    main()
