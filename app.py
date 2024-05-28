@@ -9,7 +9,7 @@ wCam, hCam = 640, 480
 screen_width, screen_height = pyautogui.size()
 pTime = 0
 
-cap = cv2.VideoCapture(1)
+cap = cv2.VideoCapture(0)
 cap.set(3, wCam)
 cap.set(4, hCam)
 
@@ -39,11 +39,11 @@ input_range_y = (int((hCam-cursor_res_y)/2), int(cursor_res_y+(hCam-cursor_res_y
 # print(input_range_x, input_range_y)
 
 # Define smoothing factor (0 < alpha < 1)
-alpha = 0.2
+alpha = 0.5
 
-# Initialize cursor position
-pLoc_X, pLoc_Y = 0, 0
-cLoc_X, cLoc_Y = 0, 0
+# Initialize previous cursor position
+prev_cursor_x = None
+prev_cursor_y = None
 
 def map_value_x(value):
     input_min, input_max = input_range_x
@@ -93,7 +93,7 @@ while True:
                                   mp_drawing.DrawingSpec(color=(0, 255, 0), thickness=2, circle_radius=2),
                                   mp_drawing.DrawingSpec(color=(0, 0, 255), thickness=2, circle_radius=2)
                                   )
-
+    print(result.multi_hand_landmarks)
     #2. Get the tip of Index and Middle Fingers
 
     if hand_landmarks:
@@ -112,18 +112,22 @@ while True:
                 knuckle_x = screen_width - (x * screen_width / wCam)
                 knuckle_y = screen_height/hCam*y
 
-
                 if 0 < knuckle_x < screen_width and 0 < knuckle_y < screen_height:
+                    if prev_cursor_x is None or prev_cursor_y is None:
+                        smoothed_x = knuckle_x
+                        smoothed_y = knuckle_y
+                    else:
+                        smoothed_x = alpha * knuckle_x + (1 - alpha) * prev_cursor_x
+                        smoothed_y = alpha * knuckle_y + (1 - alpha) * prev_cursor_y
 
-                    # Smoothening Cursor Movement
-                    cLoc_X = pLoc_X + (knuckle_x - pLoc_X) / alpha
-                    cLoc_Y = pLoc_Y + (knuckle_y - pLoc_Y) / alpha
+                    # Move cursor to the smoothed position
 
-                    #Moving Cursor
-                    win32api.SetCursorPos((int(cLoc_X),int(cLoc_Y)))
+                    win32api.SetCursorPos((int(smoothed_x),int(smoothed_y)))
+                    # print(int(smoothed_x),int(smoothed_y),x,y)
 
-                    #Updating Cursor Movement
-                    pLoc_X, pLoc_Y = cLoc_X, cLoc_Y
+                    # Update previous cursor position
+                    prev_cursor_x = smoothed_x
+                    prev_cursor_y = smoothed_y
 
                     if abs(knuckle_y - index_y) < 50 and not left_click_flag:
                         print('left click')

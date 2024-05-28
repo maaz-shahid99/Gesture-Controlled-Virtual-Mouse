@@ -1,0 +1,13 @@
+env/
+__pycache__/
+class_test.py
+app.py
+models/
+gesture_command.txt
+hand_detect.py
+model.joblib
+Readme.md
+requirements.txt
+result.avi
+Test.ipynb
+utils.py
