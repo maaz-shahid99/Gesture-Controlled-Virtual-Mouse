@@ -1,22 +1,29 @@
-# grab and rotate and zoom in zoom out merged
-
 import cv2
 import numpy as np
 import mediapipe as mp
 import pyautogui
+import time
 
 class HandGestureController:
-    def __init__(self, cam_index=0, wCam=640, hCam=480):
-        self.wCam, self.hCam = wCam, hCam
-        self.screen_width, self.screen_height = pyautogui.size()
+    def __init__(self, cam_index=0, wCam=640, hCam=480, max_num_hands=2, min_detection_confidence=0.7, min_tracking_confidence=0.5):
         self.cap = cv2.VideoCapture(cam_index)
-        self.cap.set(3, self.wCam)
-        self.cap.set(4, self.hCam)
+        self.cap.set(3, wCam)
+        self.cap.set(4, hCam)
+        self.screen_width, self.screen_height = pyautogui.size()
         self.mp_hands = mp.solutions.hands
-        self.hands = self.mp_hands.Hands(max_num_hands=2, min_detection_confidence=0.7, min_tracking_confidence=0.5)
+        self.hands = self.mp_hands.Hands(max_num_hands=max_num_hands,
+                                         min_detection_confidence=min_detection_confidence,
+                                         min_tracking_confidence=min_tracking_confidence)
         self.mp_draw = mp.solutions.drawing_utils
         self.prev_finger_distance = None
         self.shift_held = False
+        self.panning = False
+        self.frame_skip = 5  # Process every 5th frame
+        self.frame_count = 0
+        self.last_action_time = time.time()
+
+    def calculate_distance(self, point1, point2):
+        return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
 
     def is_open_palm(self, lm_list):
         finger_tips = [8, 12, 16, 20]
@@ -29,60 +36,19 @@ class HandGestureController:
         finger_tips = [8, 12, 16, 20]
         return all(lm_list[tip].y > lm_list[tip - 2].y for tip in finger_tips)
 
-    def calculate_distance(self, point1, point2):
-        return np.sqrt((point1.x - point2.x) ** 2 + (point1.y - point2.y) ** 2)
-
-    def process_frame(self, img):
-        img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        results = self.hands.process(img_rgb)
-        return results
-
-    def detect_gesture_and_perform_action(self, results, img):
+    def process_hand_gestures(self, results, img):
         right_hand_detected = False
         left_hand_detected = False
         gesture_label_right = ""
         gesture_label_left = ""
+        cLoc_X, cLoc_Y = None, None
 
         if results.multi_hand_landmarks and results.multi_handedness:
-            for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
-                lm_list = [lm for lm in hand_landmarks.landmark]
+            hand_landmarks_list = results.multi_hand_landmarks
 
-                if handedness.classification[0].label == 'Right':
-                    if self.is_open_palm(lm_list):
-                        gesture_label_right = "Open Palm"
-                        right_hand_detected = True
-                    elif self.is_victory_gesture(lm_list):
-                        gesture_label_right = "Victory"
-                        right_hand_detected = True
-                    elif self.is_closed_fist(lm_list):
-                        gesture_label_right = "Closed Fist"
-                        right_hand_detected = True
-
-                elif handedness.classification[0].label == 'Left':
-                    if self.is_open_palm(lm_list):
-                        gesture_label_left = "Open Palm"
-                        left_hand_detected = True
-                    elif self.is_victory_gesture(lm_list):
-                        gesture_label_left = "Victory"
-                        left_hand_detected = True
-                    elif self.is_closed_fist(lm_list):
-                        gesture_label_left = "Closed Fist"
-                        left_hand_detected = True
-
-                if right_hand_detected and left_hand_detected:
-                    if gesture_label_left == "Closed Fist" and gesture_label_right == "Open Palm":
-                        pyautogui.dragTo(int(lm_list[8].x * self.screen_width), int(lm_list[8].y * self.screen_height), button='middle')
-                        if not self.shift_held:
-                            pyautogui.keyDown('shift')
-                            self.shift_held = True
-
-                if not (right_hand_detected and left_hand_detected) and self.shift_held:
-                    pyautogui.keyUp('shift')
-                    self.shift_held = False
-
-            if len(results.multi_hand_landmarks) == 2:
-                hand1_landmarks = results.multi_hand_landmarks[0]
-                hand2_landmarks = results.multi_hand_landmarks[1]
+            if len(hand_landmarks_list) == 2:
+                hand1_landmarks = hand_landmarks_list[0]
+                hand2_landmarks = hand_landmarks_list[1]
 
                 thumb1_tip = hand1_landmarks.landmark[self.mp_hands.HandLandmark.THUMB_TIP]
                 index1_tip = hand1_landmarks.landmark[self.mp_hands.HandLandmark.INDEX_FINGER_TIP]
@@ -101,8 +67,71 @@ class HandGestureController:
 
                 self.prev_finger_distance = avg_finger_distance
 
+            for hand_landmarks, handedness in zip(results.multi_hand_landmarks, results.multi_handedness):
+                lm_list = [lm for lm in hand_landmarks.landmark]
+
+                if handedness.classification[0].label == 'Right':
+                    if self.is_open_palm(lm_list):
+                        gesture_label_right = "Open Palm"
+                        right_hand_detected = True
+
+                    elif self.is_victory_gesture(lm_list):
+                        gesture_label_right = "Victory"
+                        right_hand_detected = True
+
+                    elif self.is_closed_fist(lm_list):
+                        gesture_label_right = "Closed Fist"
+                        right_hand_detected = True
+
+                    if right_hand_detected:
+                        x = int(lm_list[8].x * self.cap.get(3))
+                        y = int(lm_list[8].y * self.cap.get(4))
+                        cLoc_X = int(self.screen_width / self.cap.get(3) * x)
+                        cLoc_Y = int(self.screen_height / self.cap.get(4) * y)
+                        self.mp_draw.draw_landmarks(img, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
+
+                elif handedness.classification[0].label == 'Left':
+                    if self.is_open_palm(lm_list):
+                        gesture_label_left = "Open Palm"
+                        left_hand_detected = True
+
+                    elif self.is_victory_gesture(lm_list):
+                        gesture_label_left = "Victory"
+                        left_hand_detected = True
+
+                    elif self.is_closed_fist(lm_list):
+                        gesture_label_left = "Closed Fist"
+                        left_hand_detected = True
+
+                    if left_hand_detected:
+                        self.mp_draw.draw_landmarks(img, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
+
+                if right_hand_detected and left_hand_detected:
+                    if gesture_label_left == "Closed Fist" and gesture_label_right == "Open Palm":
+                        pyautogui.dragTo(cLoc_X, cLoc_Y, button='middle')
+                        if not self.shift_held:
+                            pyautogui.keyDown('shift')
+                            self.shift_held = True
+
+        if not (right_hand_detected and left_hand_detected) and self.shift_held:
+            pyautogui.keyUp('shift')
+            self.shift_held = False
+
+        if results.multi_hand_landmarks:
             for hand_landmarks in results.multi_hand_landmarks:
-                self.mp_draw.draw_landmarks(img, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
+                lm_list = [lm for lm in hand_landmarks.landmark]
+                hand_center_x = int(lm_list[9].x * self.screen_width)
+                hand_center_y = int(lm_list[9].y * self.screen_height)
+
+                if self.is_closed_fist(lm_list):
+                    if not self.panning:
+                        pyautogui.mouseDown(button='middle')
+                        self.panning = True
+                    pyautogui.moveTo(hand_center_x, hand_center_y, duration=0.1)
+                elif self.is_victory_gesture(lm_list):
+                    if self.panning:
+                        pyautogui.mouseUp(button='middle')
+                        self.panning = False
 
         return img
 
@@ -110,15 +139,28 @@ class HandGestureController:
         while True:
             ret, img = self.cap.read()
             if not ret:
+                print("No frame received. Exiting.")
                 break
+
+            self.frame_count += 1
+            if self.frame_count % self.frame_skip != 0:
+                continue
 
             img = cv2.flip(img, 1)
-            results = self.process_frame(img)
-            img = self.detect_gesture_and_perform_action(results, img)
+            img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+            results = self.hands.process(img_rgb)
+            img = self.process_hand_gestures(results, img)
 
-            cv2.imshow("Hand Gesture Control", img)
-            if cv2.waitKey(1) & 0xFF == ord('q'):
+            cv2.imshow("Hand Gesture Recognition", img)
+
+            key = cv2.waitKey(1) & 0xFF
+            if key == ord('q'):
                 break
+
+            current_time = time.time()
+            if current_time - self.last_action_time < 0.05:  # Limit action frequency
+                continue
+            self.last_action_time = current_time
 
         self.cap.release()
         cv2.destroyAllWindows()
@@ -126,5 +168,5 @@ class HandGestureController:
             pyautogui.keyUp('shift')
 
 if __name__ == "__main__":
-    hand_gesture_controller = HandGestureController()
-    hand_gesture_controller.run()
+    gesture_controller = HandGestureController()
+    gesture_controller.run()
