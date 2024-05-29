@@ -10,9 +10,9 @@ class HandTrackingMouseControl:
         self.screen_width, self.screen_height = pyautogui.size()
         self.pTime = 0
 
-        self.cap = cv2.VideoCapture(1)
-        self.cap.set(3, self.wCam)
-        self.cap.set(4, self.hCam)
+        # self.cap = cv2.VideoCapture(1)
+        # self.cap.set(3, self.wCam)
+        # self.cap.set(4, self.hCam)
 
         self.mp_drawing = mp.solutions.drawing_utils
         self.mp_hands = mp.solutions.hands
