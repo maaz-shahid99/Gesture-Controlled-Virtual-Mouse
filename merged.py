@@ -50,7 +50,10 @@ class HandGestureController:
             hand_landmarks_list = results.multi_hand_landmarks
 
             if len(hand_landmarks_list) == 1:
-                self.hand_tracker.process_frame(img, results)
+                handedness = results.multi_handedness[0].classification[0].label
+                if handedness == 'Right':
+                    self.hand_tracker.process_frame(img, results)
+                    right_hand_detected = True
 
             if len(hand_landmarks_list) == 2:
                 hand1_landmarks = hand_landmarks_list[0]
