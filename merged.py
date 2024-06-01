@@ -6,7 +6,7 @@ import time
 from HandTrackingMouseControl import HandTrackingMouseControl
 
 class HandGestureController:
-    def __init__(self, cam_index=1, wCam=640, hCam=480, max_num_hands=2, min_detection_confidence=0.7, min_tracking_confidence=0.5):
+    def __init__(self, cam_index=0, wCam=640, hCam=480, max_num_hands=2, min_detection_confidence=0.7, min_tracking_confidence=0.5):
         self.cap = cv2.VideoCapture(cam_index)
         self.cap.set(3, wCam)
         self.cap.set(4, hCam)
@@ -107,6 +107,7 @@ class HandGestureController:
                     elif self.is_victory_gesture(lm_list):
                         gesture_label_left = "Victory"
                         left_hand_detected = True
+                        pyautogui.press('w')  # Simulate pressing 'W' key
 
                     elif self.is_closed_fist(lm_list):
                         gesture_label_left = "Closed Fist"
@@ -114,6 +115,11 @@ class HandGestureController:
 
                     if left_hand_detected:
                         self.mp_draw.draw_landmarks(img, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
+
+                    if gesture_label_left == "Closed Fist":
+                        pyautogui.mouseDown(button='left')
+                    elif gesture_label_left == "Open Palm":
+                        pyautogui.mouseUp(button='left')
 
                 if right_hand_detected and left_hand_detected:
                     if gesture_label_left == "Closed Fist" and gesture_label_right == "Open Palm":
@@ -143,7 +149,7 @@ class HandGestureController:
                         self.panning = False
 
         return img
-
+    
     def run(self):
         while True:
             ret, img = self.cap.read()
