@@ -38,6 +38,11 @@ class HandGestureController:
     def is_closed_fist(self, lm_list):
         finger_tips = [8, 12, 16, 20]
         return all(lm_list[tip].y > lm_list[tip - 2].y for tip in finger_tips)
+    
+    def is_pointing_gesture(self, lm_list):
+        return (lm_list[8].y < lm_list[6].y and  # Index finger extended
+                all(lm_list[tip].y > lm_list[tip - 2].y for tip in [12, 16, 20]))  # Other fingers folded
+
 
     def process_hand_gestures(self, results, img):
         right_hand_detected = False
@@ -92,12 +97,26 @@ class HandGestureController:
                         gesture_label_right = "Closed Fist"
                         right_hand_detected = True
 
+                    elif self.is_pointing_gesture(lm_list):
+                        gesture_label_right = "Pointing"
+                        right_hand_detected = True
+
                     if right_hand_detected:
                         x = int(lm_list[8].x * self.cap.get(3))
                         y = int(lm_list[8].y * self.cap.get(4))
                         cLoc_X = int(self.screen_width / self.cap.get(3) * x)
                         cLoc_Y = int(self.screen_height / self.cap.get(4) * y)
                         self.mp_draw.draw_landmarks(img, hand_landmarks, self.mp_hands.HAND_CONNECTIONS)
+
+                        # Simulate mouse drag with right hand index finger
+                        if gesture_label_right == "Open Palm":
+                            pyautogui.mouseUp(button='left')
+                        elif gesture_label_right == "Closed Fist":
+                            pyautogui.mouseDown(button='left')
+                        elif gesture_label_right == "Victory":
+                            pyautogui.dragTo(cLoc_X, cLoc_Y, button='left')
+                        elif gesture_label_right == "Pointing":
+                            pyautogui.dragTo(cLoc_X, cLoc_Y, button='left')
 
                 elif handedness.classification[0].label == 'Left':
                     if self.is_open_palm(lm_list):
